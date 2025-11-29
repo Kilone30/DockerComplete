@@ -1,0 +1,445 @@
+import 'dart:convert';
+import 'package:atlas/inicio.dart';
+import 'package:atlas/main.dart';
+import 'package:atlas/respaldos/descargas.dart';
+import 'package:atlas/tutor/actualizar.dart';
+import 'package:atlas/tutor/alta.dart';
+import 'package:atlas/tutor/consultar.dart';
+import 'package:atlas/tutorados/nuevo_ingreso.dart';
+import 'package:atlas/tutorados/poblacion.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:atlas/session.dart';
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Individual',
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color.fromARGB(255, 34, 255, 244)),
+      ),
+      home: IndividualPage(),
+    );
+  }
+}
+
+class IndividualPage extends StatefulWidget {
+  @override
+  _IndividualPageState createState() => _IndividualPageState();
+}
+
+class _IndividualPageState extends State<IndividualPage> {
+  Color _inicioColor = Colors.white;
+  Color _tutoresColor=Colors.white;
+  Color _salirColor = Colors.white;
+  String _mensajeExito = '';
+  List<List<String>> excelData = [];
+  List<List<String>> filteredData = [];
+  TextEditingController _searchController = TextEditingController();
+
+  Future<void> _updateTutorStatus(String rfc, bool newStatus) async {
+  final url = 'http://mex-ico.mx/kernel/public/api/tutores/$rfc'; // URL de la API, asumiendo que usas el RFC para identificar al tutor.
+  final body = json.encode({
+    'tutor': newStatus, // Actualizar el estado del tutor
+  });
+
+  final response = await http.put(
+    Uri.parse(url),
+    headers: {'Content-Type': 'application/json'},
+    body: body,
+  );
+
+  if (response.statusCode == 200) {
+    // Si la actualización es exitosa, puedes mostrar un mensaje o realizar otras acciones
+    print('Tutor actualizado exitosamente');
+  } else {
+    // Manejar el error si la actualización falla
+    print('Error al actualizar el tutor: ${response.body}');
+  }
+}
+
+
+@override
+void initState() {
+  super.initState();
+  _loadPredefinedExcel();
+  _searchController.addListener(_filterData);
+  // Elimina esta línea:
+  // _updateTutorStatus(); 
+}
+
+
+  void _filterData() {
+  String query = _searchController.text.toLowerCase();
+  setState(() {
+    filteredData = excelData.where((row) {
+      // Buscar en cualquier celda que contenga el texto
+      return row.any((cell) => cell.toLowerCase().contains(query)) ||
+             row[5].toLowerCase().contains(query); // Asumiendo que el índice 5 es 'Licenciatura'
+    }).toList();
+  });
+}
+
+
+  Future<List<Map<String, dynamic>>> fetchTutores() async {
+    final response = await http.get(Uri.parse('http://mex-ico.mx/kernel/public/api/tutores/tutores-individuales'));
+
+    if (response.statusCode == 200) {
+      var responseJson = json.decode(response.body);
+      List<dynamic> data = responseJson['data'];
+
+      List<Map<String, dynamic>> tutorsList = [];
+for (var tutor in data) {
+  tutorsList.add({
+    'RFC': tutor['rfc'] ?? 'N/A',
+    'Nombre': tutor['nombre'] ?? 'N/A',
+    'Primer Apellido': tutor['primer_apellido'] ?? 'N/A',
+    'Segundo Apellido': tutor['segundo_apellido'] ?? 'N/A',
+    'Equipo Colaborativo': tutor['equipo_colaborativo'] != null
+        ? '${tutor['equipo_colaborativo']['nombre']} (${tutor['equipo_colaborativo']['licenciatura']})'
+        : 'N/A',
+    'Licenciatura': tutor['equipo_colaborativo'] != null
+        ? tutor['equipo_colaborativo']['licenciatura']
+        : 'N/A',  // Añadir campo para la licenciatura separada
+  });
+}
+
+      return tutorsList;
+    } else {
+      throw Exception('Error al cargar los tutores');
+    }
+  }
+
+  void _loadPredefinedExcel() async {
+    try {
+      List<Map<String, dynamic>> data = await fetchTutores();
+
+      List<List<String>> tempData = [];
+      if (data.isNotEmpty) {
+        tempData.add(data[0].keys.toList());
+        for (var row in data) {
+          tempData.add(row.values.map((value) => value.toString()).toList());
+        }
+      }
+
+      setState(() {
+        excelData = tempData;
+        filteredData = tempData;
+        _mensajeExito = 'Datos cargados exitosamente desde la API.';
+      });
+    } catch (e) {
+      print('Error al cargar los datos: $e');
+      setState(() {
+        _mensajeExito = 'Error al cargar los datos desde la API.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Text(
+                  '    A T L A S    | ',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                MouseRegion(
+                  onEnter: (_) => setState(() => _inicioColor = const Color.fromARGB(255, 241, 218, 5)),
+                  onExit: (_) => setState(() => _inicioColor = Colors.white),
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => InicioPage(token: Session.token,)),
+                      );
+                    },
+                    child: Text(
+                      'Inicio',
+                      style: TextStyle(
+                        color: _inicioColor,
+                        fontSize: 15,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
+                VerticalDivider(color: Colors.white),
+                // Popup para "Tutores"
+                MouseRegion(
+                  onEnter: (_) => setState(() => _tutoresColor = const Color.fromARGB(255, 241, 218, 5)),
+                  onExit: (_) => setState(() => _tutoresColor = Colors.white),
+                  child: PopupMenuButton<String>(
+                    onSelected: (String result) {
+                      if (result == 'actualizas') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ActualizarPage()),
+                        );
+                      } else {
+                        // Aquí puedes agregar la navegación para otras opciones
+                        print(result);
+                      }
+                      if (result == 'dar_de_alta') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => AltaPage()),
+                        );
+                      } else {
+                        // Aquí puedes agregar la navegación para otras opciones
+                        print(result);
+                      }
+                      if (result == 'eliminar') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => IndividualPage()),
+                        );
+                      } else {
+                        // Aquí puedes agregar la navegación para otras opciones
+                        print(result);
+                      }
+                      if (result == 'consultas') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ConsultaPage()),
+                        );
+                      } else {
+                        // Aquí puedes agregar la navegación para otras opciones
+                        print(result);
+                      }
+                    },
+                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                      PopupMenuItem<String>(
+                        value: 'dar_de_alta',
+                        child: Text('Dar de Alta'),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'eliminar',
+                        child: Text('Activar Colaborativos'), //eliminar
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'eliminar',
+                        child: Text('Activar Individuales'), //eliminar
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'actualizas',
+                        child: Text('Actualizar Datos'),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'consultas',
+                        child: Text('Consultar')
+                       ),
+                    ],
+                    child: Text(
+                      'Tutores',
+                      style: TextStyle(
+                        color: _tutoresColor,
+                        fontSize: 15,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
+
+                VerticalDivider(color: Colors.white),
+
+                // Popup para "Tutorados"
+                PopupMenuButton<String>(
+                  onSelected: (String result) {
+                  if (result == 'poblacion') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => PoblacionPage()),
+                        );
+                      } else {
+                        // Aquí puedes agregar la navegación para otras opciones
+                        print(result);
+                      }
+                      if (result == 'nuevo_ingreso') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => NuevoIngresoPage()),
+                        );
+                      } else {
+                        // Aquí puedes agregar la navegación para otras opciones
+                        print(result);
+                      }
+                  },
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(
+                      value: 'poblacion',
+                      child: Text('Población'),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'nuevo_ingreso',
+                      child: Text('Nuevo Ingreso'),
+                    ),
+                  ],
+                  child: Text(
+                    'Tutorados',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ),
+
+                VerticalDivider(color: Colors.white),
+
+                // Popup para "Respaldo"
+                PopupMenuButton<String>(
+                  onSelected: (String result) {
+                    if (result == 'descargar') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => DescargasPage()),
+                        );
+                      } else {
+                        // Aquí puedes agregar la navegación para otras opciones
+                        print(result);
+                      }
+                    print(result);
+                  },
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(
+                      value: 'descargar',
+                      child: Text('Descargar'),
+                    ),
+                  ],
+                  child: Text(
+                    'Respaldo',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            MouseRegion(
+              onEnter: (_) => setState(() => _salirColor = const Color.fromARGB(255, 241, 218, 5)),
+              onExit: (_) => setState(() => _salirColor = Colors.white),
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()), // Redirige a la nueva página
+                );
+                },
+                child: Text(
+                  'Salir',
+                  style: TextStyle(
+                    color: _salirColor,
+                    fontSize: 15,
+                    fontWeight: FontWeight.normal,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color.fromARGB(255, 15, 105, 60),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(height: 20),
+            Text(
+              'Tutores Individuales',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  labelText: 'Buscar tutor por nombre',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.search),
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+            if (filteredData.isNotEmpty) ...[
+              SingleChildScrollView(
+  scrollDirection: Axis.horizontal,
+  child: DataTable(
+    columns: [
+      ...filteredData[0].map((header) => DataColumn(label: Text(header))),
+      DataColumn(label: Text("Activo")), // Nueva columna para el checkbox
+    ],
+    rows: filteredData.skip(1).map((row) {
+      // Verificar si el tutor está activo
+      bool isActive = row[4] == 'TRUE'; // Asumiendo que el índice 4 es "tutor"
+
+      return DataRow(
+        color: MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
+            return isActive ? Colors.grey.shade300 : Colors.white; // Fondo sombreado si activo, blanco si no
+          },
+        ),
+        cells: [
+          ...row.map((cell) {
+            return DataCell(Text(cell));
+          }),
+          DataCell(
+            Checkbox(
+              value: isActive,
+              onChanged: (bool? newValue) {
+                setState(() {
+                  int rowIndex = filteredData.indexOf(row);
+                  filteredData[rowIndex][4] = newValue! ? 'TRUE' : 'FALSE'; // Cambiar el valor "tutor"
+                  // Llamar a _updateTutorStatus con el RFC y el nuevo valor
+                  _updateTutorStatus(row[0], newValue!); // Asumiendo que el índice 0 es "rfc"
+                });
+              },
+            ),
+          ),
+        ],
+      );
+    }).toList(),
+  ),
+)
+
+            ] else
+              Center(
+                child: Text(
+                  _mensajeExito.isNotEmpty ? _mensajeExito : 'Cargando...',
+                  style: TextStyle(color: Colors.black),
+                ),
+              ),
+            SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: () {
+                
+              },
+              child: Text('Guardar Cambios'),
+            ),
+            SizedBox(height: 30),
+          ],
+        ),
+      ),
+    );
+  }
+}

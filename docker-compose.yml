@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  frontend:
+    build: ./frontend
+    container_name: supervisores_frontend
+    ports:
+      - "8080:80"
+    restart: always
+
+  backend:
+    build: ./backend
+    container_name: supervisores_backend
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./backend:/var/www
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: postgres:15
+    container_name: supervisores_db
+    environment:
+      POSTGRES_DB: supervisores
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5433:5432"
+    volumes:
+      - supervisores_data:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  supervisores_data:
