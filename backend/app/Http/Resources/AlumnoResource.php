@@ -157,9 +157,7 @@ class AlumnoResource extends JsonResource
       'licenciatura' => [
         'clave' => $this->licenciatura->clave,
         'nombre' => $this->licenciatura->nombre
-      ],
-      'plan_estudios' => $this->planEstudio->nombre,
-      'periodo_ingreso' => $this->periodo_ingreso->periodo ?? null
+      ]
     ];
   }
 }

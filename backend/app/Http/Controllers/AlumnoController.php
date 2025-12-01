@@ -298,14 +298,9 @@ class AlumnoController extends Controller
      */
     public function postAlumno(StoreAlumnoRequest $alumno): JsonResponse
     {
-        $alumnoValidado = $alumno->safe()->except(['licenciatura', 'plan_estudio', 'linea_acentuacion']);
-        $claveLicenciaturaValidada = $alumno->safe()->only(['licenciatura']);
-        $nombrePlanEstudio = $alumno->safe()->only(['plan_estudio']);
-        $nombreLineaEspecializada = $alumno->safe()->only(['linea_acentuacion']);
+        $alumnoValidado = $alumno->safe()->except(['licenciatura']);
 
         $licenciatura = Licenciatura::firstWhere('clave', $claveLicenciaturaValidada);
-        $planEstudio = PlanEstudio::firstWhere('nombre', $nombrePlanEstudio);
-        $lineaEspecializada = LineaEspecializada::firstWhere('nombre', $nombreLineaEspecializada);
 
         $alumnoNuevo = new Alumno();
         $alumnoNuevo->num_cuenta = $alumnoValidado['num_cuenta'];
@@ -316,8 +311,6 @@ class AlumnoController extends Controller
         $alumnoNuevo->correo_personal = $alumnoValidado['correo_personal'];
         $alumnoNuevo->correo_institucional = $alumnoValidado['correo_institucional'];
         $alumnoNuevo->licenciatura_id = $licenciatura->id;
-        $alumnoNuevo->plan_estudio_id = $planEstudio->id;
-        $alumnoNuevo->linea_especializada_id = $lineaEspecializada->id ?? null;
 
         $alumnoNuevo->save();
 

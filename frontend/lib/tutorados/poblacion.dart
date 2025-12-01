@@ -64,7 +64,7 @@ class _PoblacionPageState extends State<PoblacionPage> {
 
  // 🔍 Obtener alumnos desde la API
  Future<List<Map<String, dynamic>>> obtenerNuevosIngresos() async {
-  final String url = 'http://127.0.0.1:8001/api/v1/alumnos';
+  final String url = 'http://localhost:9000/api/v1/alumnos';
 
   try {
     final response = await http.get(Uri.parse(url));
@@ -90,7 +90,7 @@ class _PoblacionPageState extends State<PoblacionPage> {
 
 // Para subir la nueva población desde un archivo Excel y procesar cambios
 Future<void> subirDatos(List<List<String>> data, List<Map<String, dynamic>> alumnosActualesApi) async {
-  final String url = 'http://127.0.0.1:8001/api/v1/alumnos';
+  final String url = 'http://localhost:9000/api/v1/alumnos';
   List<List<String>> errores = [];
   List<Map<String, dynamic>> eliminados = [];
 
@@ -126,7 +126,6 @@ Future<void> subirDatos(List<List<String>> data, List<Map<String, dynamic>> alum
     try {
       final response = await http.post(
         Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
         body: jsonEncode(alumnoData),
       );
 

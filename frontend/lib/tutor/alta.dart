@@ -48,7 +48,7 @@ class _AltaPageState extends State<AltaPage> {
   bool _isLoading = false;
 
   // Lista de equipos colaborativos para selección
-  List<String> _equiposColaborativos = ['ICO', 'IEL', 'IME', 'ICI', 'ISES','IIA']; // Equipos colaborativos disponibles
+  List<String> _equiposColaborativos = ['MAquila 1', 'MAquila 2', 'Maquila 3', 'Area de carga', 'Area de descarga']; // Equipos colaborativos disponibles
 
   // 🔍 Función para obtener todos los docentes
   Future<void> guardarCache(List<dynamic> docentes) async {
@@ -76,11 +76,8 @@ Future<void> cargarCache() async {
     return [];
   }
   Future<void> editarRFC(String rfcOriginal, String nuevoRFC) async {
-  final url = Uri.parse('http://127.0.0.1:8001/api/v1/docentes/rfc/{rfc}');
-  final headers = {
-    'accept': 'application/json',
-    'Authorization': 'Bearer ${Session.token}',
-  };
+  final url = Uri.parse('http://localhost:9000/api/v1/docentes/rfc/{rfc}');
+
 
   final body = jsonEncode({
     'rfc_control_escolar': nuevoRFC,
@@ -88,7 +85,7 @@ Future<void> cargarCache() async {
   });
 
   try {
-    final response = await http.put(url, headers: headers, body: body);
+    final response = await http.put(url, body: body);
 
 
     if (response.statusCode == 200) {
@@ -120,11 +117,8 @@ Future<void> obtenerDocentes() async {
 
   try {
     final response = await http.get(
-      Uri.parse('http://127.0.0.1:8001/api/v1/docentes'),
-      headers: {
-        'Authorization': 'Bearer ${Session.token}',
-        'Accept': 'application/json',
-      },
+      Uri.parse('http://localhost:9000/api/v1/docentes'),
+
     );
     if (response.statusCode == 200) {
       final responseData = await procesarDatos(response.body);
@@ -167,12 +161,7 @@ Future<void> obtenerDocentes() async {
   
   // ➕ Función para agregar tutor al equipo
   Future<void> agregarTutorAEquipo(String rfc, String licenciatura) async {
-    final url = Uri.parse('http://127.0.0.1:8001/api/v1/tutores/rfc/$rfc/tutor-equipo'); 
-
-    final headers = {
-      'accept': 'application/json',
-      'Authorization': 'Bearer ${Session.token}',
-    };
+    final url = Uri.parse('http://localhost:9000/api/v1/tutores/rfc/$rfc/tutor-equipo'); 
 
     final body = jsonEncode({'licenciatura': licenciatura
                               });
@@ -180,7 +169,7 @@ Future<void> obtenerDocentes() async {
     print(rfc);
     
     try {
-      final response = await http.put(url, headers: headers, body: body);
+      final response = await http.put(url, body: body);
 
       if (response.statusCode == 200) {
         // ignore: use_build_context_synchronously
@@ -204,18 +193,13 @@ Future<void> obtenerDocentes() async {
 
   // ➖ Función para eliminar tutor del equipo
 Future<void> eliminarTutorDeEquipo(String rfc) async {
-  final urlGet = Uri.parse('http://127.0.0.1:8001/api/v1/tutores/rfc/$rfc/tutorados'); // API GET para obtener los tutorados por RFC del tutor
-  final urlPut = Uri.parse('http://127.0.0.1:8001/api/v1/tutores/rfc/$rfc/cambio-tutor'); // API PUT para actualizar tutorados
-  final urlDelete = Uri.parse('http://127.0.0.1:8001/api/v1/tutores/rfc/$rfc'); // API DELETE para eliminar el tutor
-
-  final headers = {
-    'accept': 'application/json',
-    'Authorization': 'Bearer ${Session.token}',
-  };
+  final urlGet = Uri.parse('http://localhost:9000/api/v1/tutores/rfc/$rfc/tutorados'); // API GET para obtener los tutorados por RFC del tutor
+  final urlPut = Uri.parse('http://localhost:9000/api/v1/tutores/rfc/$rfc/cambio-tutor'); // API PUT para actualizar tutorados
+  final urlDelete = Uri.parse('http://localhost:9000/api/v1/tutores/rfc/$rfc'); // API DELETE para eliminar el tutor
 
   try {
     // Paso 1: Obtener los tutorados del tutor actual
-    final responseGet = await http.get(urlGet, headers: headers);
+    final responseGet = await http.get(urlGet);
     if (responseGet.statusCode == 200) {
       // Parsear la respuesta JSON
       final Map<String, dynamic> data = jsonDecode(responseGet.body);
@@ -231,7 +215,6 @@ Future<void> eliminarTutorDeEquipo(String rfc) async {
           };
           // Realizar el PUT para cada tutorado
           final responsePut = await http.put(urlPut,
-              headers: headers,
               body: jsonEncode(tutoradoData));
 
           // Verificar si el PUT fue exitoso
@@ -251,7 +234,7 @@ Future<void> eliminarTutorDeEquipo(String rfc) async {
       }
 
       // Paso 2: Eliminar al tutor
-      final responseDelete = await http.delete(urlDelete, headers: headers);
+      final responseDelete = await http.delete(urlDelete);
 
       if (responseDelete.statusCode == 200 || responseDelete.statusCode == 204) {
         // El tutor fue eliminado exitosamente

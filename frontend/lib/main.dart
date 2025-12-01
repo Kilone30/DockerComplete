@@ -124,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
                   backgroundColor: const Color.fromARGB(255, 199, 37, 9),
                 ),
                 child: Text(
-                  'Acceder',
+                  'acceder',
                   style: TextStyle(color: Colors.white),
                 ),
               ),

@@ -271,7 +271,7 @@ class _InicioPageState extends State<InicioPage> {
             ),
             SizedBox(height: 20),
             Text(
-              'Nuestro Equipo',
+              'Nuestro equipo',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 10),
@@ -304,7 +304,7 @@ class _InicioPageState extends State<InicioPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Contacto del Área de Recursos Humanos',
+                            'Contacto del Área de Recursos humanos',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,

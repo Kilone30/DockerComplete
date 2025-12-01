@@ -66,14 +66,12 @@ class _NuevoIngresoPageState extends State<NuevoIngresoPage> {
       _isLoading = true;
     });
 
-    final String url = 'http://127.0.0.1:8001/api/v1/alumnos';
+    final String url = 'http://localhost:9000/api/v1/alumnos';
 
     try {
     final response = await http.get(
       Uri.parse(url),
       headers: {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ${Session.token}',
       },
     );
       if (response.statusCode == 200) {
@@ -128,9 +126,9 @@ class _NuevoIngresoPageState extends State<NuevoIngresoPage> {
   }
 
 Future<void> subirDatos(List<List<String>> data) async {
-  final String urlAlumnos = 'http://127.0.0.1:8001/api/v1/alumnos';
-  final String urlTutores = 'http://127.0.0.1:8001/api/v1/tutores';
-  final String urlAsignar = 'http://127.0.0.1:8001/api/v1/asignar-tutor';
+  final String urlAlumnos = 'http://localhost:9000/api/v1/alumnos';
+  final String urlTutores = 'http://localhost:9000/api/v1/tutores';
+  final String urlAsignar = 'http://localhost:9000/api/v1/asignar-tutor';
 
   List<List<String>> errores = [];
 
@@ -140,8 +138,6 @@ Future<void> subirDatos(List<List<String>> data) async {
     final response = await http.get(
       Uri.parse(urlTutores),
       headers: {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ${Session.token}',
       },
     );
     if (response.statusCode == 200) {
@@ -178,9 +174,7 @@ Future<void> subirDatos(List<List<String>> data) async {
     try {
       final response = await http.post(
         Uri.parse(urlAlumnos),
-        headers: {'Content-Type': 'application/json',
-                  'Accept': 'application/json',
-                  'Authorization': 'Bearer ${Session.token}',},
+        headers: {},
         body: jsonEncode(alumnoData),
       );
 
@@ -226,9 +220,7 @@ Future<void> asignarTutor(String numCuenta, String carrera, List<dynamic> tutore
     try {
       final response = await http.post(
         Uri.parse(urlAsignar),
-        headers: {'Content-Type': 'application/json',
-                  'Accept': 'application/json',
-                  'Authorization': 'Bearer ${Session.token}',},
+        headers: {},
         
         body: jsonEncode({
           "num_cuenta": numCuenta,

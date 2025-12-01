@@ -43,7 +43,7 @@ class _IndividualPageState extends State<IndividualPage> {
   TextEditingController _searchController = TextEditingController();
 
   Future<void> _updateTutorStatus(String rfc, bool newStatus) async {
-  final url = 'http://mex-ico.mx/kernel/public/api/tutores/$rfc'; // URL de la API, asumiendo que usas el RFC para identificar al tutor.
+  final url = 'http://localhost:9000/api/tutores/$rfc'; // URL de la API, asumiendo que usas el RFC para identificar al tutor.
   final body = json.encode({
     'tutor': newStatus, // Actualizar el estado del tutor
   });
